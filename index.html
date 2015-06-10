@@ -1,0 +1,189 @@
+<html>
+	<head>
+		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.10/angular.min.js"></script>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<style>
+			*{
+				margin: 0;
+				padding: 0;
+			}
+			body {
+				background: #ffb81d;
+			}
+			p {
+				margin-top:10px;
+			}
+			label {
+				font-weight: 900;
+				display: inline-block;
+				width: 220px;
+			}
+			code {
+				background: #000000;
+				color: #ffffff;
+				padding: 5px;
+				margin: 5px;
+				display: block;
+			}
+			h1 {
+				margin-bottom:15px;
+			}
+			#content {
+				margin: 0 auto;
+				padding: 25px;
+				width: 75%;
+				background: #ffffff;
+			}
+			.step {
+				background: #e0e0e0;
+				padding: 10px;
+				margin-top: 25px;
+				-moz-border-radius: 7px;
+				-webkit-border-radius: 7px;
+				-o-border-radius: 7px;
+				border-radius: 7px;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="content" ng-app="" ng-init="workingDir='/path/to/working/directory';gitSvnRepo='/path/to/local/REPO_NAME.git';git-repo='git@github.com/wlion/REPO_NAME.git';svnRepo='svn://example.com/project';">
+			<h1>Convert an SVN repository into a Git repository</h1>
+			<p>Useful when Github's auto import fails which is certain if any of your commit history has any .git related files. Fill in the inputs below to have the directions tailored for straight copy and paste.</p>
+			<p>&nbsp;</p>
+		 	<p><label>SVN Repo:</label> <input type="text" ng-model="svnRepo"> <i>ex: svn://example.com/project (Remote SVN repo we are importing)</i></p>
+		 	<p><label>Path to our working directory:</label> <input type="text" ng-model="workingDir"> <i>ex: /path/to/working/directory (This will be where we pull down the git-svn)</i></p>
+		 	<p><label>Path to Local Git SVN repo:</label> <input type="text" ng-model="gitSvnRepo"> <i>ex: /path/to/local/REPO_NAME.git (This .git will be made during the walkthrough.</i></p>
+		 	<p><label>Destination git repo:</label> <input type="text" ng-model="gitRepo"> <i>ex: git@github.com/wlion/REPO_NAME.git</i></p>
+
+		 	<div class="step">
+		 		Skip this step if you have an auth file already. Just fill in the path below. Otherwise create the SVN Author to Git User relationship file. This will need to be run from the directory of a checked out version of your SVN repo
+				<code><span ng-non-bindable>svn log -q | awk -F '|' '/^r/ {sub("^ ", "", $2); sub(" $", "", $2); print $2" = "$2" <"$2">"}' | sort -u ></span> <span ng-bind="authFile"></span></code>
+				<p><label>Path to Authors file:</label> <input type="text" ng-model="authFile"> <i>ex: /path/to/auth/file.txt</i></p>
+			</div>
+
+			<div class="step">
+				Create the directory we will be pulling the git svn repo into and cd into it
+				<code>cd <span ng-cloak>{{workingDir || "/path/to/working/directory"}}</span></code>
+			</div>
+
+			<div class="step">
+				Initialize our git SVN repo
+				<code ng-cloak>git svn clone {{ svnRepo || "svn://example.com/project"}} --no-metadata -A {{authFile || "/path/to/auth/file.txt"}} --stdlayout {{workingDir || "/path/to/working/directory"}}</code>
+			</div>
+
+			<div class="step">
+				Set our authors for conversion<br />
+				<code ng-cloak>git config svn.authorsfile {{authFile || "/path/to/auth/file.txt"}}</code>
+			</div>
+
+			<div class="step">
+				Fetch our SVN repo data
+				<code>git svn fetch</code>
+			</div>
+
+			<div class="step">
+				Convert svn-ignore properties to gitignore file
+				<code>git svn show-ignore -i trunk > .gitignore</code>
+				<code>git add .gitignore</code>
+				<code>git commit -m 'Convert svn:ignore properties to .gitignore.'</code>
+			</div>
+
+			<div class="step">
+				Check branches (OPTIONAL)
+				<code>git branch -a</code>
+			</div>
+
+			<div class="step">
+				Convert tags
+				<code>for t in `git branch -r | grep 'tags/' | sed s_tags/__` ; do</code>
+				<code>git tag $t tags/$t^</code>
+				<code>git branch -d -r tags/$t</code>
+				<code>done</code>
+			</div>
+
+			<div class="step">
+				Remove svn compatibility references
+				<code>git config --remove-section svn-remote.svn</code>
+				<code>rm -rf .git/svn .git/<span ng-non-bindable>{logs/,}</span>refs/remotes/svn/</code>
+			</div>
+
+			<div class="step">Config our origin url
+				<code>git config remote.origin.url .</code>
+			</div>
+
+			<div class="step">
+				Set our remote origin fetch config
+				<code>git config --add remote.origin.fetch +refs/remotes/*:refs/heads/*</code>
+			</div>
+
+			<div class="step">Fetch everything down from svn ref dirs
+				<code>git fetch</code>
+			</div>
+
+			<div class="step">Initialize our bare local repo
+				<code>git init --bare <span ng-cloak>{{gitSvnRepo || "/path/to/local/REPO_NAME.git"}}</span></code>
+			</div>
+
+			<div class="step">
+				Switch directory to out local target repo
+				<code>cd <span ng-cloak>{{gitSvnRepo || "/path/to/local/REPO_NAME.git"}}</span></p></code>
+			</div>
+
+			<div class="step">Point our default branch to TRUNK
+				<code>git symbolic-ref HEAD refs/heads/trunk</code>
+			</div>
+
+
+			<div class="step">
+				Add remote for our local push target
+				<code>git remote add bare2 <span ng-cloak>{{gitSvnRepo || "/path/to/local/REPO_NAME.git"}}</span></code>
+			</div>
+
+			<div class="step">
+				Config our remote push target
+				<code>git config remote.bare2.push 'refs/remotes/*:refs/heads/*'</code>
+			</div>
+
+			<div class="step">
+				Change directory to our SVN initialized local git repo
+				<code>cd <span ng-cloak>{{workingDir || "/path/to/working/directory"}}</span></code>
+			</div>
+
+			<div class="step">
+				Push everything to our local bare rep
+				<code>git push bare2</code>
+			</div>
+
+			<div class="step">
+				Change directory to our new local
+				<code>cd <span ng-cloak>{{gitSvnRepo || "/path/to/local/REPO_NAME.git"}}</span></span></p></code>
+			</div>
+
+			<div class="step">
+				Verify the branches exist (OPTIONAL)
+				<code>git branch -a</code>
+			</div>
+
+			<div class="step">
+				Rename the old trunk branch to master
+				<code>git branch -m trunk master</code>
+			</div>
+
+			<div class="step">
+				Add the final remote destination
+				<code>git remote add origin <span ng-cloak>{{gitRepo || "git@github.com/wlion/REPO_NAME.git"}}</span></span></code>
+			</div>
+
+
+			<div class="step">
+				Push out master
+				<code>git push -u origin master</code>
+			</div>
+
+			<div class="step">
+				Push all branches to the repo
+				<code>git push --all</code>
+			</div>
+		</div>
+	</body>
+</html>
