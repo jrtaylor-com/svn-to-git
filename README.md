@@ -3,3 +3,6 @@ Walk through for importing SVN repos to Git with history that are to large or ha
 
 
 Uses AngularJS to setup some binds to allow you to populate repository details so the walk through is tailored to the repos you are working with.
+
+---
+Try it out at: http://jrtaylor.com/svn-to-git/

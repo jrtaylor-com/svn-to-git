@@ -8,7 +8,7 @@
 				padding: 0;
 			}
 			body {
-				background: #ffb81d;
+				background: #333333;
 			}
 			p {
 				margin-top:10px;
@@ -46,6 +46,7 @@
 		</style>
 	</head>
 	<body>
+		<a href="/">Back to jrtaylor.com</a>
 		<div id="content" ng-app="" ng-init="workingDir='/path/to/working/directory';gitSvnRepo='/path/to/local/REPO_NAME.git';git-repo='git@github.com/wlion/REPO_NAME.git';svnRepo='svn://example.com/project';">
 			<h1>Convert an SVN repository into a Git repository</h1>
 			<p>Useful when Github's auto import fails which is certain if any of your commit history has any .git related files. Fill in the inputs below to have the directions tailored for straight copy and paste.</p>
@@ -185,5 +186,6 @@
 				<code>git push --all</code>
 			</div>
 		</div>
+		Author: <a href="https://github.com/jrtaylor-com/svn-to-git">James Taylor</a>
 	</body>
 </html>
